@@ -5,11 +5,14 @@ import path from 'path';
 import fs from 'fs';
 import { getSession } from "@/lib/auth";
 import mysql from "mysql2/promise";
+import { MongoClient } from "mongodb";
 
 const execAsync = promisify(exec);
+const MONGO_URI = "mongodb+srv://avnishkrmbd_db_user:l2H8DZxu6a3HbaAP@cluster0s.kp3pdkq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0s";
 
 export async function POST(req: Request) {
   let connection;
+  let mongoClient;
   const tempFile = path.join(process.cwd(), `lh-${Date.now()}.json`);
   
   try {
@@ -72,21 +75,49 @@ export async function POST(req: Request) {
     try {
       const session = await getSession();
       if (session) {
-        connection = await mysql.createConnection(process.env.DATABASE_URL!);
-        await connection.execute(
-          'INSERT INTO SeoCheck (url, score, performanceScore, details, userId, checkedAt) VALUES (?, ?, ?, ?, ?, ?)',
-          [
+        // --- MONGODB INTEGRATION ---
+        try {
+          mongoClient = new MongoClient(MONGO_URI);
+          await mongoClient.connect();
+          const db = mongoClient.db("colvo_seo");
+          const seoChecksCollection = db.collection("seo_checks");
+          
+          await seoChecksCollection.insertOne({
             url,
-            Math.round(results.performanceScore),
-            Math.round(results.performanceScore),
-            JSON.stringify(results),
-            session.user.id,
-            new Date()
-          ]
-        );
+            score: Math.round(results.performanceScore),
+            performanceScore: Math.round(results.performanceScore),
+            details: results,
+            userId: session.user.id,
+            checkedAt: new Date()
+          });
+          console.log("AUDIT POST: Saved to MongoDB");
+        } catch (mongoErr) {
+          console.warn("AUDIT POST: MongoDB save failed:", mongoErr);
+        }
+
+        // --- MYSQL INTEGRATION ---
+        if (process.env.DATABASE_URL) {
+          try {
+            connection = await mysql.createConnection(process.env.DATABASE_URL);
+            await connection.execute(
+              'INSERT INTO SeoCheck (url, score, performanceScore, details, userId, checkedAt) VALUES (?, ?, ?, ?, ?, ?)',
+              [
+                url,
+                Math.round(results.performanceScore),
+                Math.round(results.performanceScore),
+                JSON.stringify(results),
+                session.user.id,
+                new Date()
+              ]
+            );
+            console.log("AUDIT POST: Saved to MySQL");
+          } catch (mysqlErr) {
+            console.warn("AUDIT POST: MySQL save skipped/failed");
+          }
+        }
       }
     } catch (dbError) {
-      console.error("DB Storage failed", dbError);
+      console.error("DB Storage wrapper failed", dbError);
     }
 
     return NextResponse.json(results);
@@ -95,6 +126,7 @@ export async function POST(req: Request) {
     console.error("AUDIT POST ERROR:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   } finally {
-    if (connection) await connection.end();
+    if (connection) await connection.end().catch(() => {});
+    if (mongoClient) await mongoClient.close();
   }
 }
