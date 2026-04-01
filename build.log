@@ -1,0 +1,131 @@
+﻿
+> colvo-weboptimizer@0.1.0 build
+> next build
+
+npm : ΓÜá Warning: 
+Next.js inferred 
+your workspace 
+root, but it may 
+not be correct.
+At line:1 char:1
++ npm run build 
+*>&1 | Out-File 
+-FilePath build.log 
+-Encoding utf8
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo  
+            : NotS  
+  pecified: (ΓÜá    
+ Warning: Ne...n    
+ot be correct.:    
+String) [], Rem    
+oteException
+    + FullyQualifie 
+   dErrorId : Nati  
+  veCommandError
+ 
+ We detected 
+multiple lockfiles 
+and selected the 
+directory of C:\User
+s\Lenovo\package-loc
+k.json as the root 
+directory.
+ To silence this 
+warning, set 
+`turbopack.root` in 
+your Next.js 
+config, or consider 
+removing one of the 
+lockfiles if it's 
+not needed.
+   See https://nextj
+s.org/docs/app/api-r
+eference/config/next
+-config-js/turbopack
+#root-directory for 
+more information.
+ Detected 
+additional 
+lockfiles: 
+   * C:\Users\Lenovo
+\colvo-weboptimizer\
+package-lock.json
+
+Γû▓ Next.js 16.2.0 (Turbopack)
+- Environments: .env
+
+ΓÜá The 
+"middleware" file 
+convention is 
+deprecated. Please 
+use "proxy" 
+instead. Learn 
+more: https://nextjs
+.org/docs/messages/m
+iddleware-to-proxy
+  Creating an optimized production build ...
+
+> Build error 
+occurred
+Error: Turbopack 
+build failed with 1 
+errors:
+./colvo-weboptimizer
+/src/app/api/analyze
+/route.ts:3:1
+Module not found: 
+Can't resolve '../au
+th/[...nextauth]/rou
+te'
+  [90m1 |[0m 
+[36mimport[0m { [
+33mNextResponse[0m 
+} [36mfrom[0m [32
+m"next/server"[0m;
+  [90m2 |[0m 
+[36mimport[0m { 
+getServerSession } 
+[36mfrom[0m [32m"
+next-auth/next"[0m;
+[31m[1m>[0m 
+[90m3 |[0m 
+[36mimport[0m { 
+authOptions } 
+[36mfrom[0m [32m"
+../auth/[...nextauth
+]/route"[0m;
+  [90m  |[0m [31m
+[1m^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+^^[0m
+  [90m4 |[0m
+  [90m5 |[0m 
+[36mexport[0m 
+[36masync[0m 
+[36mfunction[0m 
+[33mPOST[0m(req: 
+[33mRequest[0m) {
+  [90m6 |[0m   
+[36mconst[0m 
+session = 
+[36mawait[0m getSe
+rverSession(authOpti
+ons);
+
+
+
+https://nextjs.org/d
+ocs/messages/module-
+not-found
+
+
+    at <unknown> (./
+colvo-weboptimizer/s
+rc/app/api/analyze/r
+oute.ts:3:1)
+    at <unknown> (ht
+tps://nextjs.org/doc
+s/messages/module-no
+t-found)

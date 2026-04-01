@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int      @id @default(autoincrement())
+  email            String   @unique
+  password         String
+  phone            String?
+  accountType      String   @default("INDIVIDUAL")
+  fullName         String?
+  organizationName String?
+  createdAt        DateTime @default(now())
+  seoChecks        SeoCheck[]
+}
+
+model SeoCheck {
+  id               Int      @id @default(autoincrement())
+  url              String
+  score            Int
+  onPageScore      Int      @default(0)
+  technicalScore   Int      @default(0)
+  contentScore     Int      @default(0)
+  performanceScore Int      @default(0)
+  linksScore       Int      @default(0)
+  details          Json?
+  checkedAt        DateTime @default(now())
+  userId           Int
+  user             User     @relation(fields: [userId], references: [id])
+}
