@@ -1,0 +1,11 @@
+node_modules
+.next
+test-api.js
+test-lh.json
+lint_output.txt
+build.log
+build_error.log
+build_full.log
+prisma_error.txt
+generate-prisma.js
+scripts/
