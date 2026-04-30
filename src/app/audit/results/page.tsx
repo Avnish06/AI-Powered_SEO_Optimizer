@@ -2,10 +2,12 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Loader2, Globe, Sparkles, Clock } from "lucide-react";
+import { ArrowLeft, Sparkles, Clock } from "lucide-react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import LighthouseReport from "@/components/LighthouseReport";
+import LighthouseSkeleton from "@/components/LighthouseSkeleton";
+import Skeleton from "@/components/Skeleton";
 
 function AuditResultsContent() {
   const searchParams = useSearchParams();
@@ -61,16 +63,23 @@ function AuditResultsContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6 text-center">
-        <div className="relative mb-8">
-          <div className="w-24 h-24 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-          <Globe className="absolute inset-0 m-auto w-10 h-10 text-blue-400 animate-pulse" />
-        </div>
-        <h1 className="text-3xl font-bold mb-4 gradient-text">Analyzing Your Site...</h1>
-        <p className="text-gray-400 max-w-md">
-          Running Lighthouse audits and scanning for performance bottle-necks.
-          This usually takes 15-30 seconds.
-        </p>
+      <div className="min-h-screen t-bg text-white">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-6 pt-32 pb-20">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
+            <div>
+              <div className="inline-flex items-center text-gray-400 mb-4">
+                <Skeleton width={100} height={16} />
+              </div>
+              <div className="flex items-center gap-3">
+                <Skeleton width={200} height={40} />
+                <Skeleton width={300} height={40} />
+              </div>
+            </div>
+            <Skeleton width={120} height={40} className="rounded-2xl" />
+          </div>
+          <LighthouseSkeleton />
+        </main>
       </div>
     );
   }
@@ -123,8 +132,14 @@ function AuditResultsContent() {
 export default function AuditResultsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+      <div className="min-h-screen t-bg">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-6 pt-32 pb-20">
+          <div className="flex flex-col gap-8">
+            <Skeleton width={400} height={48} className="mb-4" />
+            <LighthouseSkeleton />
+          </div>
+        </main>
       </div>
     }>
       <AuditResultsContent />
