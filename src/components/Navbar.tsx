@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
 import { motion, AnimatePresence } from "framer-motion";
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 const navLinks = [
   { label: "Features", href: "/#features" },
   { label: "How it Works", href: "/#how" },
@@ -45,43 +47,18 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 px-4 pt-3" id="navbar">
+    <nav className="fixed top-0 left-0 right-0 z-50 px-4 pt-3 no-print" id="navbar">
       <motion.div
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className={`max-w-6xl mx-auto flex items-center justify-between px-5 py-3 transition-all duration-300 ${
-          scrolled ? "rounded-2xl" : "rounded-2xl"
-        }`}
+        transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+        className={`w-full flex items-center justify-between px-8 py-4 transition-all duration-500 border-b t-border glass`}
         style={{
-          background: scrolled ? "var(--navbar-bg)" : "var(--navbar-bg)",
-          backdropFilter: "blur(20px) saturate(180%)",
-          WebkitBackdropFilter: "blur(20px) saturate(180%)",
-          border: "1px solid var(--navbar-border)",
-          boxShadow: scrolled ? "0 4px 24px rgba(0,0,0,0.08)" : "none",
+          background: scrolled ? "var(--navbar-bg)" : "transparent",
         }}
       >
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group" id="navbar-logo">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow"
-            style={{ background: "var(--gradient)" }}
-          >
-            <Search className="text-white w-3.5 h-3.5" />
-          </div>
-          <span
-            className="text-lg font-black tracking-tight"
-            style={{ color: "var(--text-primary)", fontFamily: "'Outfit', sans-serif" }}
-          >
-            SEO<span
-              style={{
-                background: "var(--gradient)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >AI</span>
-          </span>
+        <Link href="/" className="flex items-center gap-2 flex-shrink-0 bg-white px-2.5 py-1 rounded-xl shadow-sm border border-slate-100" id="navbar-logo">
+          <img src="/logo2.png" alt="SEOAI Logo" className="h-7 w-auto select-none" />
         </Link>
 
         {/* Desktop links */}
@@ -169,7 +146,12 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/signup"
-                className="premium-button text-sm px-4 py-2 rounded-xl"
+                className="text-sm font-semibold px-4 py-2 rounded-lg transition-all"
+                style={{
+                  background: "var(--accent)",
+                  color: "white",
+                  boxShadow: "none",
+                }}
               >
                 Get Started
               </Link>

@@ -56,11 +56,8 @@ export default function Footer() {
         >
           {/* Brand */}
           <div className="col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "var(--gradient)" }}>
-                <Search className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-lg font-black t-heading">SEO<span className="gradient-text">AI</span></span>
+            <div className="inline-flex items-center gap-2 bg-white px-2.5 py-1 rounded-xl shadow-sm border border-slate-100 mb-4">
+              <img src="/logo2.png" alt="SEOAI Logo" className="h-7 w-auto select-none" />
             </div>
             <p className="text-sm t-body leading-relaxed mb-6">
               Hatbaliya Technologies delivers cutting-edge digital services that help businesses thrive in the digital era.
