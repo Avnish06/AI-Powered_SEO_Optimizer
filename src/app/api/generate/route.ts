@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-
 export async function POST(req: Request) {
   try {
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "API Key is missing. Please check your configuration." },
+        { status: 500 },
+      );
+    }
+
     const { prompt } = await req.json();
 
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
       model: "gemini-2.0-flash", 
     });
