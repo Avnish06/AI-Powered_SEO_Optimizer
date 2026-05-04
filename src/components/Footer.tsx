@@ -143,7 +143,14 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="w-full h-px mb-6" style={{ background: "var(--border-color)" }} />
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 relative">
-          <p className="text-xs t-muted">© 2025 Hatbaliya Technologies. All rights reserved.</p>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <p className="text-xs t-muted">© 2025 Hatbaliya Technologies. All rights reserved.</p>
+            <div className="flex items-center gap-3">
+              <Link href="/privacy" className="text-xs t-muted hover:text-[var(--accent)] transition-colors">Privacy Policy</Link>
+              <span className="text-xs t-muted">•</span>
+              <Link href="/terms" className="text-xs t-muted hover:text-[var(--accent)] transition-colors">Terms of Service</Link>
+            </div>
+          </div>
           <motion.button
             onClick={scrollToTop}
             aria-label="Scroll to top"
