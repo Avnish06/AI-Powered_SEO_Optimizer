@@ -1,193 +1,118 @@
 "use client";
 
-import {
-  Search, Shield, Zap, Sparkles, FileText, Link as LinkIcon, ArrowRight,
-} from "lucide-react";
 import { motion } from "framer-motion";
+import { Search, Zap, FileText, Globe, ShieldCheck, BarChart3 } from "lucide-react";
 
 const features = [
   {
     icon: Search,
     title: "On-Page Analysis",
-    desc: "Deep crawl of titles, meta descriptions, header hierarchies, and canonical tags for maximal relevance scoring.",
-    accent: "#6366f1",
-    tag: "Core",
+    description: "Title tags, meta descriptions, H1 structure, image alt text, canonical URLs — checked and graded instantly.",
+    tag: "On-Page",
   },
   {
-    icon: Shield,
+    icon: ShieldCheck,
     title: "Technical Audit",
-    desc: "HTTPS enforcement, viewport meta, structured data, and HTML validation — the infrastructure layer search engines demand.",
-    accent: "#8b5cf6",
+    description: "HTTPS, viewport, language tags, charset, structured data, and HTML size — every technical signal covered.",
     tag: "Technical",
-  },
-  {
-    icon: Zap,
-    title: "Performance Metrics",
-    desc: "Simulated load time, LCP estimations, and optimization hints to keep bounce rates low and conversions high.",
-    accent: "#f59e0b",
-    tag: "Speed",
   },
   {
     icon: FileText,
     title: "Content Quality",
-    desc: "Word count analysis, keyword density, readability score, and thin-content detection to avoid ranking penalties.",
-    accent: "#10b981",
+    description: "Word count, readability score, paragraph density, and thin-content detection to keep pages Google-ready.",
     tag: "Content",
   },
   {
-    icon: LinkIcon,
-    title: "Link Intelligence",
-    desc: "Internal vs external link balance, broken link discovery, and anchor text diversity across your entire page.",
-    accent: "#ef4444",
-    tag: "Links",
+    icon: Globe,
+    title: "Open Graph & Social",
+    description: "Validates og:title, og:image, og:description, and Twitter card tags so your links look great everywhere.",
+    tag: "Social",
   },
   {
-    icon: Sparkles,
-    title: "AI Recommendations",
-    desc: "GPT-4 powered, impact-ranked suggestions that tell you exactly what to fix and why it matters to your rankings.",
-    accent: "#06b6d4",
-    tag: "AI",
+    icon: Zap,
+    title: "Core Web Vitals",
+    description: "Real LCP, FCP, TBT, CLS, and TTI from the Google PageSpeed Insights API — not simulated numbers.",
+    tag: "Performance",
+  },
+  {
+    icon: BarChart3,
+    title: "Link Structure",
+    description: "Internal link count, external links, nofollow ratios, and empty href detection for clean link architecture.",
+    tag: "Links",
   },
 ];
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
-};
-
-const cardVariants = {
-  hidden:  { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as any } },
-};
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 export default function Features() {
   return (
-    <section id="features" className="py-32 px-4 relative">
-      {/* Subtle section separator */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: "var(--bg-elevated)", opacity: 0.45 }}
-      />
+    <section id="features" className="py-28 px-4 t-bg border-t t-border">
+      <div className="max-w-6xl mx-auto">
 
-      {/* Ambient blob */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at center, rgba(99,102,241,0.06) 0%, transparent 70%)" }}
-      />
-
-      <div className="max-w-6xl mx-auto relative z-10">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-2xl mb-20"
-        >
-          <div className="inline-flex items-center gap-2 mb-5 accent-chip">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>10-Factor Analysis Engine</span>
-          </div>
-          <h2
-            className="text-4xl md:text-6xl font-black mb-5 leading-tight tracking-tight"
-            style={{ color: "var(--text-primary)", fontFamily: "'Outfit', sans-serif" }}
+        <div className="max-w-xl mb-16">
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: EASE }}
+            className="text-xs font-semibold uppercase tracking-widest t-muted mb-4"
           >
-            Everything your site
-            <br />
-            <span
-              style={{
-                background: "var(--gradient)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              actually needs.
-            </span>
-          </h2>
-          <p className="text-lg leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-            We evaluate every ranking signal that matters — not just the obvious ones.
-            Our engine surfaces the issues others miss.
-          </p>
-        </motion.div>
+            What we check
+          </motion.p>
+          <motion.h2
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.05, ease: EASE }}
+            className="text-3xl sm:text-4xl font-bold tracking-tight t-heading leading-[1.15]"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+          >
+            Everything that affects<br />
+            your search ranking.
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+            className="mt-4 t-body text-base leading-relaxed"
+          >
+            One scan covers six SEO dimensions — so you never miss the issue
+            that's holding your site back.
+          </motion.p>
+        </div>
 
-        {/* Grid */}
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-60px" }}
-          style={{ background: "var(--border-color)", borderRadius: "20px", overflow: "hidden" }}
-        >
-          {features.map((feature, i) => (
+        {/* Feature Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[var(--border-color)] border t-border rounded-2xl overflow-hidden">
+          {features.map((f, i) => (
             <motion.div
               key={i}
-              variants={cardVariants}
-              className="group relative p-8"
-              style={{ background: "var(--bg-surface)" }}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.06, duration: 0.45, ease: EASE }}
+              className="bg-[var(--bg-surface)] p-7 group hover:bg-[var(--bg-elevated)] transition-colors duration-200"
             >
-              {/* Hover highlight */}
-              <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                style={{ background: `${feature.accent}06` }}
-              />
-
               {/* Tag */}
-              <div className="flex items-start justify-between mb-6">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center"
-                  style={{ background: `${feature.accent}14` }}
-                >
-                  <feature.icon className="w-5 h-5" style={{ color: feature.accent }} />
-                </div>
-                <span
-                  className="text-[10px] font-bold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full"
-                  style={{
-                    color: feature.accent,
-                    background: `${feature.accent}14`,
-                  }}
-                >
-                  {feature.tag}
-                </span>
+              <span className="inline-block text-[10px] font-bold uppercase tracking-wider t-muted mb-4">
+                {f.tag}
+              </span>
+
+              {/* Icon */}
+              <div className="w-9 h-9 rounded-lg bg-[var(--accent-soft)] flex items-center justify-center mb-4">
+                <f.icon className="w-4.5 h-4.5" style={{ color: "var(--accent)" }} />
               </div>
 
-              <h3
-                className="text-base font-bold mb-2"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {feature.title}
+              <h3 className="text-base font-semibold t-heading mb-2 leading-snug">
+                {f.title}
               </h3>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                {feature.desc}
+              <p className="text-sm t-body leading-relaxed">
+                {f.description}
               </p>
-
-              {/* Bottom accent line */}
-              <div
-                className="mt-6 h-px w-0 group-hover:w-full transition-all duration-500 rounded-full"
-                style={{ background: `linear-gradient(90deg, ${feature.accent}, transparent)` }}
-              />
             </motion.div>
           ))}
-        </motion.div>
-
-        {/* Bottom CTA link */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
-          className="mt-10 flex justify-center"
-        >
-          <a
-            href="#how"
-            className="inline-flex items-center gap-2 text-sm font-semibold group"
-            style={{ color: "var(--accent)" }}
-          >
-            See how the analysis works
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </a>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

@@ -4,12 +4,82 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, ArrowRight, Shield, Globe, Search } from "lucide-react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Skeleton from "@/components/Skeleton";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
+
+function InputField({
+  label,
+  id,
+  type,
+  icon: Icon,
+  placeholder,
+  value,
+  onChange,
+  required = true,
+  extra,
+}: any) {
+  const [showPwd, setShowPwd] = useState(false);
+  const isPassword = type === "password";
+  const inputType = isPassword ? (showPwd ? "text" : "password") : type;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label
+          htmlFor={id}
+          className="text-xs font-semibold uppercase tracking-wider"
+          style={{ color: "var(--text-muted)" }}
+        >
+          {label}
+        </label>
+        {extra}
+      </div>
+      <div className="relative">
+        <Icon
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+          style={{ color: "var(--text-muted)" }}
+        />
+        <input
+          id={id}
+          type={inputType}
+          required={required}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className="w-full rounded-xl py-3 pl-10 pr-10 text-sm transition-all"
+          style={{
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border-color)",
+            color: "var(--text-primary)",
+            outline: "none",
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "var(--accent)";
+            e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.1)";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "var(--border-color)";
+            e.target.style.boxShadow = "none";
+          }}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPwd(!showPwd)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2"
+            style={{ color: "var(--text-muted)" }}
+          >
+            {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -22,17 +92,14 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     try {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
-
       router.push("/dashboard");
       router.refresh();
     } catch (err: any) {
@@ -43,147 +110,160 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen t-bg relative overflow-hidden flex flex-col">
+    <main className="min-h-screen t-bg flex flex-col relative overflow-hidden">
       <Navbar />
 
-      {/* Decorative blobs for symmetry and depth */}
+      {/* Ambient blobs */}
       <div
-        className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full pointer-events-none opacity-20"
-        style={{ background: "radial-gradient(ellipse at center, var(--accent) 0%, transparent 70%)", transform: "translate(-30%, -30%)" }}
+        className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full pointer-events-none opacity-15"
+        style={{ background: "radial-gradient(ellipse, var(--accent) 0%, transparent 70%)" }}
       />
       <div
-        className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none opacity-20"
-        style={{ background: "radial-gradient(ellipse at center, var(--accent-2) 0%, transparent 70%)", transform: "translate(30%, 30%)" }}
+        className="absolute -bottom-32 -right-32 w-[480px] h-[480px] rounded-full pointer-events-none opacity-15"
+        style={{ background: "radial-gradient(ellipse, var(--accent-2) 0%, transparent 70%)" }}
       />
 
-      <div className="flex-1 flex items-center justify-center px-6 py-24 relative z-10">
-        <motion.div 
-          initial={{ opacity: 0, y: 20, scale: 0.98 }}
+      <div className="flex-1 flex items-center justify-center px-4 py-28 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 24, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: EASE }}
-          className="w-full max-w-md t-card p-8 md:p-10 rounded-[2rem] relative"
+          transition={{ duration: 0.65, ease: EASE }}
+          className="w-full max-w-sm"
         >
-          <div className="text-center mb-10">
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="w-12 h-12 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg"
-              style={{ background: "var(--gradient)" }}
-            >
-              <Shield className="text-white w-6 h-6" />
-            </motion.div>
-            <h1 className="text-3xl font-black mb-3 tracking-tight t-heading">Welcome Back</h1>
-            <p className="text-sm t-body font-medium">Continue your SEO journey with AI</p>
-          </div>
-
-          <AnimatePresence>
-            {error && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-6 overflow-hidden"
-              >
-                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm font-medium">
-                  {error}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider t-muted ml-1">Email Address</label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 t-muted group-focus-within:text-[var(--accent)] transition-colors" />
-                <input
-                  type="email"
-                  required
-                  className="w-full t-elevated border t-border rounded-xl py-3.5 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all text-sm t-heading"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between ml-1">
-                <label className="text-xs font-bold uppercase tracking-wider t-muted">Password</label>
-                <Link href="#" className="text-xs font-semibold text-[var(--accent)] hover:underline">Forgot password?</Link>
-              </div>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 t-muted group-focus-within:text-[var(--accent)] transition-colors" />
-                <input
-                  type="password"
-                  required
-                  className="w-full t-elevated border t-border rounded-xl py-3.5 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all text-sm t-heading"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <motion.button 
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit" 
-              disabled={loading}
-              className="premium-button w-full py-4 text-sm font-bold flex items-center justify-center group disabled:opacity-50 mt-4"
-            >
-              {loading ? (
-                <Skeleton width={80} height={18} className="bg-white/20" />
-              ) : (
-                <>
-                  Log In to Dashboard
-                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </motion.button>
-          </form>
-
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t t-border"></div>
-            </div>
-            <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.2em]">
-              <span className="t-surface px-4 t-muted">Or continue with</span>
-            </div>
-          </div>
-
-          <motion.button
-            whileHover={{ scale: 1.02, backgroundColor: "var(--bg-muted)" }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-            className="w-full py-3.5 px-6 t-elevated border t-border rounded-xl flex items-center justify-center gap-3 transition-all cursor-pointer"
+          {/* Card */}
+          <div
+            className="rounded-2xl p-8"
+            style={{
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-color)",
+              boxShadow: "var(--shadow-lg)",
+            }}
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-1 .67-2.28 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.67-.35-1.39-.35-2.09s.13-1.42.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            <span className="t-heading font-bold text-sm">Continue with Google</span>
-          </motion.button>
+            {/* Logo mark */}
+            <div className="mb-8">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center mb-5"
+                style={{ background: "var(--gradient)" }}
+              >
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                </svg>
+              </div>
+              <h1
+                className="text-2xl font-black tracking-tight mb-1"
+                style={{ color: "var(--text-primary)", fontFamily: "'Outfit', sans-serif" }}
+              >
+                Welcome back
+              </h1>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                Sign in to continue your SEO journey.
+              </p>
+            </div>
 
-          <p className="text-center mt-10 text-sm font-medium t-body">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-[var(--accent)] font-bold hover:underline">Create account</Link>
-          </p>
+            {/* Error */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden mb-5"
+                >
+                  <div
+                    className="p-3.5 rounded-xl text-sm"
+                    style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}
+                  >
+                    {error}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <InputField
+                label="Email"
+                id="login-email"
+                type="email"
+                icon={Mail}
+                placeholder="name@company.com"
+                value={email}
+                onChange={(e: any) => setEmail(e.target.value)}
+              />
+              <InputField
+                label="Password"
+                id="login-password"
+                type="password"
+                icon={Lock}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e: any) => setPassword(e.target.value)}
+                extra={
+                  <Link href="#" className="text-xs font-semibold" style={{ color: "var(--accent)" }}>
+                    Forgot?
+                  </Link>
+                }
+              />
+
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                type="submit"
+                disabled={loading}
+                className="premium-button w-full py-3 text-sm mt-2"
+                id="login-submit-btn"
+              >
+                {loading ? (
+                  <Skeleton width={80} height={16} className="bg-white/25" />
+                ) : (
+                  <>
+                    Log In
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </motion.button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t" style={{ borderColor: "var(--border-color)" }} />
+              </div>
+              <div className="relative flex justify-center">
+                <span
+                  className="px-3 text-[10px] font-bold uppercase tracking-[0.15em]"
+                  style={{ background: "var(--bg-surface)", color: "var(--text-muted)" }}
+                >
+                  or
+                </span>
+              </div>
+            </div>
+
+            {/* Google */}
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              className="w-full py-3 px-4 rounded-xl flex items-center justify-center gap-3 text-sm font-semibold transition-all hover:bg-[var(--bg-elevated)]"
+              style={{
+                border: "1px solid var(--border-color)",
+                color: "var(--text-primary)",
+                background: "var(--bg-surface)",
+              }}
+            >
+              <svg className="w-4.5 h-4.5" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-1 .67-2.28 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.67-.35-1.39-.35-2.09s.13-1.42.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 2.18 2.18 5.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Continue with Google
+            </motion.button>
+
+            <p className="text-center mt-6 text-sm" style={{ color: "var(--text-secondary)" }}>
+              No account?{" "}
+              <Link href="/signup" className="font-semibold" style={{ color: "var(--accent)" }}>
+                Create one free
+              </Link>
+            </p>
+          </div>
         </motion.div>
       </div>
     </main>

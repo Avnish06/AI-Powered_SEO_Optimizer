@@ -1,260 +1,203 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Sparkles, Shield, BarChart3, Zap, Globe, Search, TrendingUp } from "lucide-react";
+import { ArrowRight, Globe, CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import Skeleton from "./Skeleton";
+import { motion } from "framer-motion";
 
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = [0.16, 1, 0.3, 1] as const;
 
-const fade = (delay = 0, y = 24) => ({
-  initial: { opacity: 0, y },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.7, delay, ease: EASE },
-});
-
-const stats = [
-  { value: "98%", label: "Accuracy Rate" },
-  { value: "2.4s", label: "Avg. Analysis Time" },
-  { value: "50K+", label: "Sites Analyzed" },
+const PROOF = [
+  "No sign-up required",
+  "Results in under 20s",
+  "Real Google PageSpeed data",
 ];
 
 export default function Hero() {
-  const [showForm, setShowForm] = useState(false);
-  const [url, setUrl] = useState("");
+  const [url, setUrl]       = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleStartAnalysis = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url) return;
-    router.push(`/audit/results?url=${encodeURIComponent(url)}`);
+    if (!url.trim()) return;
+    setLoading(true);
+    router.push(`/audit/results?url=${encodeURIComponent(url.trim())}`);
   };
 
   return (
-    <section className="relative pt-40 pb-28 px-4 overflow-hidden">
-      {/* Ambient background */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute -top-64 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full opacity-40"
-          style={{ background: "radial-gradient(ellipse at center, rgba(99,102,241,0.15) 0%, transparent 65%)" }}
-        />
-        <div
-          className="absolute top-1/2 -right-64 w-[600px] h-[600px] rounded-full opacity-30"
-          style={{ background: "radial-gradient(ellipse at center, rgba(139,92,246,0.12) 0%, transparent 70%)" }}
-        />
-        {/* Grid pattern */}
-        <svg className="absolute inset-0 w-full h-full opacity-[0.025]" style={{ color: "var(--text-primary)" }}>
-          <defs>
-            <pattern id="hero-grid" width="64" height="64" patternUnits="userSpaceOnUse">
-              <path d="M 64 0 L 0 0 0 64" fill="none" stroke="currentColor" strokeWidth="1"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#hero-grid)" />
-        </svg>
+    <section className="relative pt-36 pb-28 px-4 flex flex-col items-center text-center overflow-hidden t-bg">
+
+      {/* Very subtle background — just a soft indigo glow, no neon blobs */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse at 50% 0%, rgba(79,70,229,0.07) 0%, transparent 70%)",
+        }}
+      />
+
+      <div className="max-w-3xl mx-auto relative z-10">
+
+        {/* Eyebrow label */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: EASE }}
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border t-border bg-[var(--bg-surface)] mb-8 shadow-sm"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+          <span className="text-[11px] font-semibold tracking-wide t-muted">
+            Free SEO Audit · No account needed
+          </span>
+        </motion.div>
+
+        {/* Headline — editorial, human */}
+        <motion.h1
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.05, ease: EASE }}
+          className="text-[2.8rem] sm:text-5xl md:text-[3.6rem] font-bold leading-[1.1] tracking-[-0.03em] t-heading mb-6"
+          style={{ fontFamily: "'DM Sans', sans-serif" }}
+        >
+          Find every SEO issue{" "}
+          <span className="gradient-text">on your site</span>
+          <br />
+          in one scan.
+        </motion.h1>
+
+        {/* Subheadline — honest, specific, human */}
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.12, ease: EASE }}
+          className="text-lg t-body mb-10 max-w-xl mx-auto leading-relaxed"
+        >
+          Paste your URL and get a full report — on-page, technical,
+          content quality, Open Graph, and real Core Web Vitals from Google.
+        </motion.p>
+
+        {/* URL Input — clean, not flashy */}
+        <motion.form
+          onSubmit={handleSubmit}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.18, ease: EASE }}
+          className="relative flex flex-col sm:flex-row gap-2.5 max-w-xl mx-auto"
+        >
+          <div
+            className="flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border t-border bg-[var(--bg-surface)] shadow-sm focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_3px_rgba(79,70,229,0.08)] transition-all"
+          >
+            <Globe className="w-4 h-4 t-muted flex-shrink-0" />
+            <input
+              type="text"
+              required
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder="https://yourwebsite.com"
+              className="flex-1 bg-transparent text-sm font-medium t-heading placeholder:t-muted outline-none min-w-0"
+            />
+          </div>
+          <button
+            disabled={loading}
+            className="premium-button px-5 py-3 rounded-xl text-sm font-semibold flex-shrink-0"
+          >
+            {loading
+              ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              : <><span>Analyze site</span><ArrowRight className="w-4 h-4" /></>
+            }
+          </button>
+        </motion.form>
+
+        {/* Proof points — simple, honest */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.35 }}
+          className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-5"
+        >
+          {PROOF.map(p => (
+            <span key={p} className="flex items-center gap-1.5 text-xs t-muted">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+              {p}
+            </span>
+          ))}
+        </motion.div>
       </div>
 
-      <div className="max-w-6xl mx-auto relative z-10">
-        <div className="text-center">
-          {/* Eyebrow */}
-          <motion.div {...fade(0)} className="inline-flex items-center gap-2 mb-8 accent-chip">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Next-Gen AI SEO Platform · Free to Start</span>
-          </motion.div>
+      {/* Dashboard preview — clean screenshot mockup */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.9, delay: 0.4, ease: EASE }}
+        className="relative mt-20 w-full max-w-5xl mx-auto px-4"
+      >
+        {/* Soft base shadow — NOT a glowing halo */}
+        <div
+          className="relative rounded-2xl overflow-hidden border t-border shadow-xl"
+          style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px var(--border-color)" }}
+        >
+          {/* Fake browser chrome */}
+          <div className="flex items-center gap-1.5 px-4 py-3 border-b t-border bg-[var(--bg-elevated)]">
+            <span className="w-3 h-3 rounded-full bg-[#FF5F57]" />
+            <span className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
+            <span className="w-3 h-3 rounded-full bg-[#28C840]" />
+            <div className="flex-1 mx-4 h-6 rounded-md bg-[var(--bg-muted)] flex items-center px-3">
+              <span className="text-[10px] t-muted truncate">seoai.app/audit/results?url=...</span>
+            </div>
+          </div>
 
-          {/* Headline — editorial, mixed weight */}
-          <motion.h1
-            {...fade(0.1)}
-            className="text-6xl md:text-8xl font-black mb-6 tracking-tight leading-[0.96] t-heading"
-            style={{ fontFamily: "'Outfit', sans-serif" }}
-          >
-            Rank{" "}
-            <em
-              className="not-italic"
-              style={{
-                background: "var(--gradient)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              higher.
-            </em>
-            <br />
-            <span className="font-light tracking-normal text-5xl md:text-6xl" style={{ color: "var(--text-secondary)" }}>
-              grow faster.
-            </span>
-          </motion.h1>
-
-          <motion.p
-            {...fade(0.2)}
-            className="text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Our AI engine crawls, scores, and suggests — giving you the exact playbook
-            to climb search results. No guesswork, no fluff.
-          </motion.p>
-
-          {/* CTA area */}
-          <motion.div {...fade(0.3)}>
-            <AnimatePresence mode="wait">
-              {!showForm ? (
-                <motion.div
-                  key="buttons"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col sm:flex-row items-center justify-center gap-3"
-                >
-                  <motion.button
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setShowForm(true)}
-                    className="premium-button text-sm px-7 py-3.5"
-                    id="hero-cta-analyze"
-                  >
-                    Start Free Analysis
-                    <ArrowRight className="w-4 h-4" />
-                  </motion.button>
-                  <motion.a
-                    href="#features"
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="text-sm font-semibold px-7 py-3.5 rounded-xl transition-all"
-                    style={{
-                      color: "var(--text-secondary)",
-                      border: "1px solid var(--border-color)",
-                      background: "var(--bg-surface)",
-                    }}
-                  >
-                    See How It Works
-                  </motion.a>
-                </motion.div>
-              ) : (
-                <motion.form
-                  key="form"
-                  initial={{ opacity: 0, scale: 0.97, y: 12 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.97, y: 12 }}
-                  transition={{ duration: 0.4, ease: EASE }}
-                  onSubmit={handleStartAnalysis}
-                  className="max-w-lg mx-auto"
-                  id="hero-analyze-form"
-                >
-                  <div
-                    className="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-2xl"
-                    style={{
-                      background: "var(--bg-surface)",
-                      border: "1.5px solid var(--border-color)",
-                      boxShadow: "0 8px 40px rgba(99,102,241,0.12)",
-                    }}
-                  >
-                    <div className="flex-1 relative">
-                      <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
-                      <input
-                        type="url"
-                        required
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        placeholder="https://yourwebsite.com"
-                        className="w-full rounded-xl py-3 pl-11 pr-4 text-sm"
-                        style={{
-                          background: "transparent",
-                          color: "var(--text-primary)",
-                          border: "none",
-                          outline: "none",
-                        }}
-                        id="hero-url-input"
-                      />
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      type="submit"
-                      disabled={loading}
-                      className="premium-button py-3 px-6 rounded-xl text-sm flex-shrink-0"
-                      id="hero-analyze-submit"
-                    >
-                      {loading ? (
-                        <Skeleton width={60} height={16} className="bg-white/25" />
-                      ) : (
-                        <><Search className="w-4 h-4" /> Analyze</>
-                      )}
-                    </motion.button>
-                  </div>
-                  <p className="text-xs mt-3" style={{ color: "var(--text-muted)" }}>
-                    Free forever · No credit card · Results in seconds
-                  </p>
-                </motion.form>
-              )}
-            </AnimatePresence>
-          </motion.div>
-
-          {/* Trust stats */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-            className="mt-20 flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16"
-          >
-            {stats.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 + i * 0.1, duration: 0.6, ease: EASE }}
-                className="flex flex-col items-center"
-              >
-                <span
-                  className="text-3xl font-black tracking-tight"
-                  style={{
-                    background: "var(--gradient)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                    fontFamily: "'Outfit', sans-serif",
-                  }}
-                >
-                  {stat.value}
-                </span>
-                <span className="text-xs font-medium mt-1" style={{ color: "var(--text-muted)" }}>
-                  {stat.label}
-                </span>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* Feature cards */}
-          <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              { icon: Shield,   title: "Bank-Grade Security",  desc: "All analysis is sandboxed. We never store your data without consent.", color: "#6366f1" },
-              { icon: TrendingUp, title: "Real-Time Metrics",  desc: "Live performance data updated every request with zero caching lag.", color: "#8b5cf6" },
-              { icon: Zap,      title: "AI-Powered Insights",  desc: "GPT-backed recommendations ranked by impact, not just list length.",  color: "#06b6d4" },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 32 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 + i * 0.1, ease: EASE }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="t-card rounded-2xl p-6 text-left"
-                id={`hero-feature-${i}`}
-              >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-                  style={{ background: `${item.color}14` }}
-                >
-                  <item.icon className="w-5 h-5" style={{ color: item.color }} />
+          {/* Mock report inside */}
+          <div className="bg-[var(--bg-surface)] p-6 sm:p-8">
+            {/* Score row */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="flex items-center gap-4 p-5 rounded-xl border t-border flex-1 bg-[var(--bg-elevated)]">
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg font-black text-emerald-600">87</span>
                 </div>
-                <h3 className="text-sm font-bold mb-1.5" style={{ color: "var(--text-primary)" }}>{item.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{item.desc}</p>
-              </motion.div>
+                <div>
+                  <p className="text-xs font-semibold t-muted uppercase tracking-wider">Overall Score</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="h-1.5 w-28 bg-[var(--bg-muted)] rounded-full overflow-hidden">
+                      <div className="h-full w-[87%] bg-emerald-500 rounded-full" />
+                    </div>
+                    <span className="text-xs font-bold text-emerald-600">Good</span>
+                  </div>
+                </div>
+              </div>
+              {[
+                { label: "On-Page", v: 91, c: "#6366f1" },
+                { label: "Technical", v: 75, c: "#8b5cf6" },
+                { label: "Content", v: 83, c: "#10b981" },
+              ].map(({ label, v, c }) => (
+                <div key={label} className="p-4 rounded-xl border t-border flex flex-col justify-between bg-[var(--bg-elevated)]">
+                  <p className="text-[10px] font-bold t-muted uppercase tracking-wider">{label}</p>
+                  <p className="text-2xl font-black mt-1" style={{ color: c }}>{v}</p>
+                </div>
+              ))}
+            </div>
+            {/* Issue list skeleton */}
+            {[
+              { status: "pass", text: "HTTPS enabled — secure connection" },
+              { status: "pass", text: "Viewport meta tag present" },
+              { status: "warn", text: "Meta description too short (64 chars)" },
+              { status: "err",  text: "2 images missing alt attributes" },
+              { status: "pass", text: "Canonical URL set correctly" },
+            ].map((row, i) => (
+              <div key={i} className="flex items-center gap-3 py-2.5 border-t t-border first:border-t-0">
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                  row.status === "pass" ? "bg-emerald-500" :
+                  row.status === "warn" ? "bg-amber-500" : "bg-rose-500"
+                }`} />
+                <span className="text-xs t-body">{row.text}</span>
+              </div>
             ))}
           </div>
         </div>
-      </div>
+
+        {/* Fade out the bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+          style={{ background: "linear-gradient(to top, var(--bg-page), transparent)" }} />
+      </motion.div>
     </section>
   );
 }

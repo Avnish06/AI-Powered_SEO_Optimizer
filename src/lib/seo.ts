@@ -1,212 +1,446 @@
 import * as cheerio from 'cheerio';
 
-export interface SeoResults {
-  score: number;
-  onPageScore: number;
-  technicalScore: number;
-  contentScore: number;
-  performanceScore: number;
-  linksScore: number;
-  details: {
-    onPage: any;
-    technical: any;
-    content: any;
-    performance: any;
-    links: any;
-    aiSuggestions: string[];
-  };
+// ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
+export interface SeoIssue {
+  type: 'error' | 'warning' | 'info' | 'pass';
+  message: string;
+  detail?: string;
 }
 
-export async function analyzeUrl(url: string): Promise<SeoResults> {
-  let html = "";
-  try {
-    const response = await fetch(url, { 
-      signal: AbortSignal.timeout(20000),
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Referer': 'https://www.google.com/',
-        'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'cross-site',
-        'Sec-Fetch-User': '?1',
-        'Upgrade-Insecure-Requests': '1',
-        'Connection': 'keep-alive'
-      }
-    });
-    if (!response.ok) throw new Error(`Failed to fetch URL: ${response.statusText}`);
-    html = await response.text();
-  } catch (err: any) {
-    throw new Error(`Could not reach the website: ${err.message}`);
+export interface CategoryResult {
+  score: number;
+  issues: SeoIssue[];
+  data: Record<string, any>;
+}
+
+export interface SeoReport {
+  url: string;
+  scannedAt: string;
+  score: number;
+  grade: string;
+  categories: {
+    onPage:      CategoryResult;
+    technical:   CategoryResult;
+    content:     CategoryResult;
+    social:      CategoryResult;
+    links:       CategoryResult;
+  };
+  pagespeed?: PageSpeedResult | null;
+  summary: string[];
+}
+
+export interface PageSpeedResult {
+  performance: number;
+  accessibility: number;
+  bestPractices: number;
+  seo: number;
+  lcp: number;
+  cls: number;
+  fcp: number;
+  tbt: number;
+  si: number;
+  tti: number;
+}
+
+// ─────────────────────────────────────────────
+// Main entry point
+// ─────────────────────────────────────────────
+export async function analyzeUrl(inputUrl: string): Promise<SeoReport> {
+  // Normalize URL
+  let url = inputUrl.trim();
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
   }
-  
-  const $ = cheerio.load(html);
 
-  const onPage = analyzeOnPage($, html);
-  const technical = analyzeTechnical(url, $, html);
-  const content = analyzeContent($, html);
-  const performance = analyzePerformance(url);
-  const links = analyzeLinks($, html);
+  // 1. Fetch HTML
+  let html = '';
+  let fetchError: string | null = null;
+  try {
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(15000),
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    });
+    if (!res.ok) fetchError = `HTTP ${res.status} ${res.statusText}`;
+    else html = await res.text();
+  } catch (err: any) {
+    fetchError = err.message;
+  }
 
-  // Scoring weights: 30/25/20/15/10
-  const onPageScore = onPage.score;
-  const technicalScore = technical.score;
-  const contentScore = content.score;
-  const performanceScore = performance.score;
-  const linksScore = links.score;
+  const $ = html ? cheerio.load(html) : cheerio.load('');
 
-  const totalScore = Math.round(
-    (onPageScore * 0.3) +
-    (technicalScore * 0.25) +
-    (contentScore * 0.2) +
-    (performanceScore * 0.15) +
-    (linksScore * 0.1)
+  // 2. Run all category analyses in parallel
+  const [onPage, technical, content, social, links, pagespeed] = await Promise.all([
+    analyzeOnPage($, url, html),
+    analyzeTechnical($, url, html),
+    analyzeContent($, html),
+    analyzeSocial($),
+    analyzeLinks($, url),
+    fetchPageSpeed(url),
+  ]);
+
+  if (fetchError) {
+    onPage.issues.unshift({ type: 'error', message: `Could not fully fetch page: ${fetchError}` });
+    onPage.score = Math.max(0, onPage.score - 30);
+  }
+
+  // 3. Weighted overall score
+  const score = Math.round(
+    onPage.score    * 0.30 +
+    technical.score * 0.25 +
+    content.score   * 0.20 +
+    social.score    * 0.15 +
+    links.score     * 0.10,
   );
 
+  const grade =
+    score >= 90 ? 'A' :
+    score >= 80 ? 'B' :
+    score >= 70 ? 'C' :
+    score >= 60 ? 'D' : 'F';
+
+  // 4. Top-level summary bullets
+  const allErrors = [onPage, technical, content, social, links]
+    .flatMap(c => c.issues)
+    .filter(i => i.type === 'error' || i.type === 'warning')
+    .slice(0, 5)
+    .map(i => i.message);
+
   return {
-    score: totalScore,
-    onPageScore,
-    technicalScore,
-    contentScore,
-    performanceScore,
-    linksScore,
-    details: {
-      onPage,
-      technical,
-      content,
-      performance,
-      links,
-      aiSuggestions: [] // To be populated by AI
-    }
+    url,
+    scannedAt: new Date().toISOString(),
+    score,
+    grade,
+    categories: { onPage, technical, content, social, links },
+    pagespeed,
+    summary: allErrors,
   };
 }
 
-function analyzeOnPage($: any, html: string) {
-  const title = $('title').text();
-  const metaDesc = $('meta[name="description"]').attr('content') || "";
-  const h1Count = $('h1').length;
-  const images = $('img');
-  const imagesWithoutAlt = images.filter((i: number, el: any) => !$(el).attr('alt')).length;
-  
+// ─────────────────────────────────────────────
+// Category: On-Page SEO
+// ─────────────────────────────────────────────
+async function analyzeOnPage($: any, url: string, html: string): Promise<CategoryResult> {
   let score = 100;
-  const issues = [];
+  const issues: SeoIssue[] = [];
 
+  const title     = $('title').text().trim();
+  const metaDesc  = $('meta[name="description"]').attr('content')?.trim() || '';
+  const canonical = $('link[rel="canonical"]').attr('href') || '';
+  const robots    = $('meta[name="robots"]').attr('content') || '';
+  const h1Tags    = $('h1').map((_: any, el: any) => $(el).text().trim()).get() as string[];
+  const h2Count   = $('h2').length;
+  const h3Count   = $('h3').length;
+  const imgs      = $('img');
+  const noAlt     = imgs.filter((_: any, el: any) => !$(el).attr('alt')).length;
+  const noAltSrc  = imgs.filter((_: any, el: any) => !$(el).attr('alt')).first().attr('src') || '';
+
+  // Title
   if (!title) {
-    score -= 30;
-    issues.push("Missing page title.");
-  } else if (title.length < 50 || title.length > 60) {
-    score -= 10;
-    issues.push(`Title length (${title.length}) should be between 50-60 chars.`);
+    score -= 25; issues.push({ type: 'error', message: 'Missing <title> tag', detail: 'Every page must have a unique title tag for SEO.' });
+  } else if (title.length < 30) {
+    score -= 10; issues.push({ type: 'warning', message: `Title too short (${title.length} chars)`, detail: 'Recommended: 50–60 characters.' });
+  } else if (title.length > 65) {
+    score -= 8; issues.push({ type: 'warning', message: `Title too long (${title.length} chars)`, detail: 'Google truncates titles over 60 characters.' });
+  } else {
+    issues.push({ type: 'pass', message: `Title is well optimized (${title.length} chars)` });
   }
 
+  // Meta description
   if (!metaDesc) {
-    score -= 20;
-    issues.push("Missing meta description.");
-  } else if (metaDesc.length < 120 || metaDesc.length > 160) {
-    score -= 10;
-    issues.push(`Meta description length (${metaDesc.length}) should be between 120-160 chars.`);
+    score -= 20; issues.push({ type: 'error', message: 'Missing meta description', detail: 'Meta descriptions increase CTR from search results.' });
+  } else if (metaDesc.length < 100) {
+    score -= 8; issues.push({ type: 'warning', message: `Meta description too short (${metaDesc.length} chars)`, detail: 'Recommended: 120–160 characters.' });
+  } else if (metaDesc.length > 165) {
+    score -= 5; issues.push({ type: 'warning', message: `Meta description too long (${metaDesc.length} chars)`, detail: 'Google may truncate descriptions over 160 chars.' });
+  } else {
+    issues.push({ type: 'pass', message: `Meta description is well optimized (${metaDesc.length} chars)` });
   }
 
-  if (h1Count !== 1) {
-    score -= 15;
-    issues.push(h1Count === 0 ? "Missing H1 tag." : `Found ${h1Count} H1 tags (should be exactly 1).`);
+  // H1
+  if (h1Tags.length === 0) {
+    score -= 20; issues.push({ type: 'error', message: 'Missing H1 heading', detail: 'Every page should have exactly one H1 tag.' });
+  } else if (h1Tags.length > 1) {
+    score -= 8; issues.push({ type: 'warning', message: `Multiple H1 tags found (${h1Tags.length})`, detail: 'Use only one H1 per page.' });
+  } else {
+    issues.push({ type: 'pass', message: `H1 present: "${h1Tags[0].slice(0, 60)}"` });
   }
 
-  if (imagesWithoutAlt > 0) {
-    score -= Math.min(15, imagesWithoutAlt * 3);
-    issues.push(`${imagesWithoutAlt} images are missing alt attributes.`);
+  // Images without alt
+  if (noAlt > 0) {
+    const deduction = Math.min(15, noAlt * 3);
+    score -= deduction;
+    issues.push({ type: 'warning', message: `${noAlt} image(s) missing alt text`, detail: 'Alt attributes help accessibility and image SEO.' });
+  } else if (imgs.length > 0) {
+    issues.push({ type: 'pass', message: `All ${imgs.length} images have alt attributes` });
   }
 
-  return { score: Math.max(0, score), issues, title, metaDesc, h1Count, imagesCount: images.length, imagesWithoutAlt };
+  // Canonical
+  if (!canonical) {
+    score -= 5; issues.push({ type: 'warning', message: 'No canonical URL tag', detail: 'Canonical tags prevent duplicate content issues.' });
+  } else {
+    issues.push({ type: 'pass', message: `Canonical URL set` });
+  }
+
+  // Robots
+  if (robots.includes('noindex')) {
+    score -= 30; issues.push({ type: 'error', message: 'Page has noindex directive', detail: 'This page is blocked from search engines!' });
+  }
+
+  return {
+    score: Math.max(0, score),
+    issues,
+    data: { title, metaDesc, h1Tags, h2Count, h3Count, canonical, robots, imagesTotal: imgs.length, imagesNoAlt: noAlt },
+  };
 }
 
-function analyzeTechnical(url: string, $: any, html: string) {
+// ─────────────────────────────────────────────
+// Category: Technical SEO
+// ─────────────────────────────────────────────
+async function analyzeTechnical($: any, url: string, html: string): Promise<CategoryResult> {
   let score = 100;
-  const issues = [];
-  
-  const isHttps = url.startsWith('https');
+  const issues: SeoIssue[] = [];
+
+  const isHttps      = url.startsWith('https://');
+  const hasViewport  = $('meta[name="viewport"]').length > 0;
+  const lang         = $('html').attr('lang') || '';
+  const hasCharset   = $('meta[charset]').length > 0 || html.toLowerCase().includes('charset');
+  const hasStructuredData = $('script[type="application/ld+json"]').length > 0;
+  const htmlSize     = Buffer.byteLength(html, 'utf8');
+  const scripts      = $('script:not([type="application/ld+json"])').length;
+  const styleSheets  = $('link[rel="stylesheet"]').length;
+  const hasNoScript  = $('noscript').length > 0;
+
+  // HTTPS
   if (!isHttps) {
-    score -= 40;
-    issues.push("Site is not using HTTPS (Critical for SEO).");
+    score -= 40; issues.push({ type: 'error', message: 'Site is not on HTTPS', detail: 'HTTPS is a confirmed Google ranking factor.' });
+  } else {
+    issues.push({ type: 'pass', message: 'HTTPS enabled (secure connection)' });
   }
 
-  const hasViewport = $('meta[name="viewport"]').length > 0;
+  // Viewport
   if (!hasViewport) {
-    score -= 20;
-    issues.push("Missing viewport meta tag (Mobile-friendliness).");
+    score -= 20; issues.push({ type: 'error', message: 'Missing viewport meta tag', detail: 'Required for mobile-friendly rendering.' });
+  } else {
+    issues.push({ type: 'pass', message: 'Viewport meta tag present (mobile-ready)' });
   }
 
-  const lang = $('html').attr('lang');
+  // Language
   if (!lang) {
-    score -= 5;
-    issues.push("HTML lang attribute is missing.");
+    score -= 5; issues.push({ type: 'warning', message: 'HTML lang attribute missing', detail: 'Helps search engines understand page language.' });
+  } else {
+    issues.push({ type: 'pass', message: `Language declared: "${lang}"` });
   }
 
-  return { score: Math.max(0, score), issues, isHttps, hasViewport, lang };
+  // Charset
+  if (!hasCharset) {
+    score -= 5; issues.push({ type: 'warning', message: 'No charset declaration found' });
+  } else {
+    issues.push({ type: 'pass', message: 'Character encoding declared' });
+  }
+
+  // Structured Data
+  if (!hasStructuredData) {
+    score -= 10; issues.push({ type: 'warning', message: 'No structured data (JSON-LD) found', detail: 'Schema markup enables rich results in Google.' });
+  } else {
+    issues.push({ type: 'pass', message: 'Structured data (JSON-LD) detected' });
+  }
+
+  // Page size
+  const kbSize = Math.round(htmlSize / 1024);
+  if (kbSize > 500) {
+    score -= 10; issues.push({ type: 'warning', message: `Large HTML page size (${kbSize} KB)`, detail: 'Large pages slow down crawling and loading.' });
+  } else {
+    issues.push({ type: 'info', message: `HTML document size: ${kbSize} KB` });
+  }
+
+  return {
+    score: Math.max(0, score),
+    issues,
+    data: { isHttps, hasViewport, lang, hasCharset, hasStructuredData, pageSizeKb: kbSize, scripts, styleSheets },
+  };
 }
 
-function analyzeContent($: any, html: string) {
-  const text = $('body').text().trim();
-  const wordCount = text.split(/\s+/).filter(Boolean).length;
-  
+// ─────────────────────────────────────────────
+// Category: Content Quality
+// ─────────────────────────────────────────────
+async function analyzeContent($: any, html: string): Promise<CategoryResult> {
   let score = 100;
-  const issues = [];
+  const issues: SeoIssue[] = [];
 
-  if (wordCount < 300) {
-    score -= 40;
-    issues.push("Critically low word count (under 300 words).");
-  } else if (wordCount < 800) {
-    score -= 15;
-    issues.push("Word count is below 800 words (thin content).");
+  const bodyText   = $('body').text().replace(/\s+/g, ' ').trim();
+  const wordCount  = bodyText.split(' ').filter(Boolean).length;
+  const paraCount  = $('p').length;
+  const listCount  = $('ul, ol').length;
+  const tableCount = $('table').length;
+
+  // Reading time estimate
+  const readingMin = Math.ceil(wordCount / 200);
+
+  // Word count
+  if (wordCount < 200) {
+    score -= 40; issues.push({ type: 'error', message: `Very thin content (${wordCount} words)`, detail: 'Pages with fewer than 300 words rank poorly.' });
+  } else if (wordCount < 600) {
+    score -= 20; issues.push({ type: 'warning', message: `Thin content (${wordCount} words)`, detail: 'Aim for 800+ words for competitive keywords.' });
+  } else if (wordCount < 1000) {
+    score -= 5; issues.push({ type: 'info', message: `Moderate content length (${wordCount} words)` });
+  } else {
+    issues.push({ type: 'pass', message: `Good content length (${wordCount} words, ~${readingMin} min read)` });
   }
 
-  const paragraphCount = $('p').length;
-  if (paragraphCount < 3 && wordCount > 100) {
-    score -= 10;
-    issues.push("Low paragraph count. Consider breaking text for readability.");
+  // Paragraphs
+  if (paraCount < 3) {
+    score -= 10; issues.push({ type: 'warning', message: `Very few paragraphs (${paraCount})`, detail: 'Structure content with more paragraphs for readability.' });
+  } else {
+    issues.push({ type: 'pass', message: `${paraCount} paragraphs found (good structure)` });
   }
 
-  return { score: Math.max(0, score), issues, wordCount, paragraphCount };
+  // Lists & tables
+  if (listCount > 0 || tableCount > 0) {
+    issues.push({ type: 'pass', message: `${listCount} list(s) and ${tableCount} table(s) found (rich formatting)` });
+  } else {
+    score -= 5; issues.push({ type: 'info', message: 'No lists or tables found', detail: 'Lists and tables improve content structure.' });
+  }
+
+  return {
+    score: Math.max(0, score),
+    issues,
+    data: { wordCount, paraCount, listCount, tableCount, readingMin },
+  };
 }
 
-function analyzePerformance(url: string) {
-  // Simulating performance metrics based on URL complexity
-  const score = Math.floor(Math.random() * (95 - 75 + 1)) + 75; // 75-95 for now
-  return { score, issues: ["Consider enabling GZIP compression.", "Optimize image delivery using WebP."] };
+// ─────────────────────────────────────────────
+// Category: Social & Open Graph
+// ─────────────────────────────────────────────
+async function analyzeSocial($: any): Promise<CategoryResult> {
+  let score = 100;
+  const issues: SeoIssue[] = [];
+
+  const ogTitle   = $('meta[property="og:title"]').attr('content') || '';
+  const ogDesc    = $('meta[property="og:description"]').attr('content') || '';
+  const ogImage   = $('meta[property="og:image"]').attr('content') || '';
+  const ogUrl     = $('meta[property="og:url"]').attr('content') || '';
+  const ogType    = $('meta[property="og:type"]').attr('content') || '';
+  const twCard    = $('meta[name="twitter:card"]').attr('content') || '';
+  const twTitle   = $('meta[name="twitter:title"]').attr('content') || '';
+  const twImage   = $('meta[name="twitter:image"]').attr('content') || '';
+
+  const ogTags = [ogTitle, ogDesc, ogImage, ogUrl, ogType];
+  const hasOg  = ogTags.some(Boolean);
+
+  if (!ogTitle) { score -= 20; issues.push({ type: 'error',   message: 'Missing og:title',        detail: 'Required for correct social media sharing.' }); }
+  else            issues.push({ type: 'pass',  message: `og:title present` });
+
+  if (!ogDesc)  { score -= 15; issues.push({ type: 'warning', message: 'Missing og:description',   detail: 'Shown in social media link previews.' }); }
+  else            issues.push({ type: 'pass',  message: 'og:description present' });
+
+  if (!ogImage) { score -= 20; issues.push({ type: 'error',   message: 'Missing og:image',         detail: 'Without og:image, social shares look broken.' }); }
+  else            issues.push({ type: 'pass',  message: 'og:image present' });
+
+  if (!twCard)  { score -= 15; issues.push({ type: 'warning', message: 'Missing twitter:card tag', detail: 'Enables Twitter/X card previews.' }); }
+  else            issues.push({ type: 'pass',  message: `twitter:card = "${twCard}"` });
+
+  if (!twImage) { score -= 10; issues.push({ type: 'info',    message: 'No twitter:image tag' }); }
+  else            issues.push({ type: 'pass',  message: 'twitter:image present' });
+
+  return {
+    score: Math.max(0, score),
+    issues,
+    data: { ogTitle, ogDesc, ogImage, ogUrl, ogType, twCard, twTitle, twImage },
+  };
 }
 
-function analyzeLinks($: any, html: string) {
-  const links = $('a');
-  let internalCount = 0;
-  let externalCount = 0;
-  let brokenFormatCount = 0;
+// ─────────────────────────────────────────────
+// Category: Links
+// ─────────────────────────────────────────────
+async function analyzeLinks($: any, pageUrl: string): Promise<CategoryResult> {
+  let score = 100;
+  const issues: SeoIssue[] = [];
 
-  links.each((i: number, el: any) => {
-    const href = $(el).attr('href');
-    if (!href || href === "#") {
-      brokenFormatCount++;
-    } else if (href.startsWith('/') || href.startsWith(process.env.NEXT_PUBLIC_APP_URL || "")) {
-      internalCount++;
-    } else {
-      externalCount++;
-    }
+  const hostname  = new URL(pageUrl).hostname;
+  let internal = 0, external = 0, noFollow = 0, empty = 0;
+
+  $('a[href]').each((_: any, el: any) => {
+    const href = $(el).attr('href') || '';
+    const rel  = $(el).attr('rel') || '';
+
+    if (!href || href === '#' || href.startsWith('javascript:')) { empty++; return; }
+    if (rel.includes('nofollow')) noFollow++;
+
+    try {
+      const target = new URL(href, pageUrl);
+      if (target.hostname === hostname) internal++;
+      else external++;
+    } catch { empty++; }
   });
 
-  let score = 100;
-  const issues = [];
-  if (brokenFormatCount > 0) {
-    score -= 10;
-    issues.push(`${brokenFormatCount} links have empty or "#" hrefs.`);
-  }
-  if (internalCount < 5) {
-    score -= 10;
-    issues.push("Low internal linking structure.");
+  const total = internal + external;
+
+  if (total === 0) {
+    score -= 15; issues.push({ type: 'warning', message: 'No links found on page' });
+  } else {
+    issues.push({ type: 'info', message: `${total} total links found` });
   }
 
-  return { score: Math.max(0, score), issues, internalCount, externalCount, brokenFormatCount };
+  if (internal < 3 && total > 0) {
+    score -= 15; issues.push({ type: 'warning', message: `Low internal linking (${internal} internal links)`, detail: 'Internal links spread link equity and aid crawling.' });
+  } else if (internal >= 3) {
+    issues.push({ type: 'pass', message: `${internal} internal links (good internal linking)` });
+  }
+
+  if (external > 0) {
+    issues.push({ type: 'pass', message: `${external} external links` });
+  }
+
+  if (empty > 0) {
+    score -= Math.min(10, empty * 2);
+    issues.push({ type: 'warning', message: `${empty} empty or javascript: links`, detail: 'These links waste crawl budget.' });
+  }
+
+  if (noFollow > 0) {
+    issues.push({ type: 'info', message: `${noFollow} nofollow links` });
+  }
+
+  return {
+    score: Math.max(0, score),
+    issues,
+    data: { internal, external, noFollow, empty, total: total + empty },
+  };
+}
+
+// ─────────────────────────────────────────────
+// PageSpeed Insights (Google API — free, no key needed for basic)
+// ─────────────────────────────────────────────
+async function fetchPageSpeed(url: string): Promise<PageSpeedResult | null> {
+  try {
+    const apiKey = process.env.PAGESPEED_API_KEY || process.env.GOOGLE_API_KEY || '';
+    const endpoint = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo${apiKey ? `&key=${apiKey}` : ''}`;
+
+    const res = await fetch(endpoint, { signal: AbortSignal.timeout(25000) });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const cats  = data.lighthouseResult?.categories || {};
+    const audits = data.lighthouseResult?.audits || {};
+
+    return {
+      performance:   Math.round((cats.performance?.score  || 0) * 100),
+      accessibility: Math.round((cats.accessibility?.score || 0) * 100),
+      bestPractices: Math.round((cats['best-practices']?.score || 0) * 100),
+      seo:           Math.round((cats.seo?.score || 0) * 100),
+      lcp:           audits['largest-contentful-paint']?.numericValue  || 0,
+      cls:           audits['cumulative-layout-shift']?.numericValue   || 0,
+      fcp:           audits['first-contentful-paint']?.numericValue    || 0,
+      tbt:           audits['total-blocking-time']?.numericValue       || 0,
+      si:            audits['speed-index']?.numericValue               || 0,
+      tti:           audits['interactive']?.numericValue               || 0,
+    };
+  } catch {
+    return null;
+  }
 }

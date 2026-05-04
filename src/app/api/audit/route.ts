@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
-import fs from 'fs';
+import { analyzeUrl } from "@/lib/seo";
 import { getSession } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
-import dbConnect from "@/lib/DBConnect";
+import DBConnect from "@/lib/DBConnect";
 import SeoCheck from "@/model/SeoCheck";
-
-const execAsync = promisify(exec);
+import mongoose from "mongoose";
 
 async function getUnifiedUser(req: Request) {
   const customSession = await getSession();
@@ -22,78 +18,48 @@ async function getUnifiedUser(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const tempFile = path.join(process.cwd(), `lh-${Date.now()}.json`);
-  
   try {
     const { url } = await req.json();
-    if (!url) {
-      return NextResponse.json({ error: "URL is required" }, { status: 400 });
+    if (!url || typeof url !== "string") {
+      return NextResponse.json({ error: "A valid URL is required." }, { status: 400 });
     }
 
-    console.log("AUDIT POST (MongoDB): Starting for", url);
+    console.log("[SEO Audit] Starting analysis for:", url);
+    const report = await analyzeUrl(url);
+    console.log("[SEO Audit] Done. Score:", report.score);
 
-    const isWindows = process.platform === 'win32';
-    const lhPath = path.join(process.cwd(), 'node_modules', '.bin', isWindows ? 'lighthouse.cmd' : 'lighthouse');
-    
-    const cmd = `"${lhPath}" "${url}" --output=json --output-path="${tempFile}" --chrome-flags="--headless --no-sandbox --disable-gpu" --only-categories=performance,accessibility,best-practices,seo --max-wait-for-load=30000 --quiet --no-update-check`;
-
+    // Save to dashboard if the user is authenticated
     try {
-      await execAsync(cmd);
-    } catch (cliError: any) {
-      if (!fs.existsSync(tempFile)) {
-        throw new Error(`Audit execution failed: ${cliError.message}`);
-      }
-    }
-    
-    if (!fs.existsSync(tempFile)) {
-      throw new Error("Lighthouse report file was not created.");
-    }
-
-    const reportJson = fs.readFileSync(tempFile, 'utf8');
-    const lhr = JSON.parse(reportJson);
-    fs.unlinkSync(tempFile);
-
-    const results = {
-      url: lhr.requestedUrl,
-      performanceScore: (lhr.categories.performance.score || 0) * 100,
-      accessibilityScore: (lhr.categories.accessibility.score || 0) * 100,
-      bestPracticesScore: (lhr.categories['best-practices'].score || 0) * 100,
-      seoScore: (lhr.categories.seo.score || 0) * 100,
-      pwaScore: (lhr.categories.pwa?.score || 0) * 100,
-      metrics: {
-        lcp: lhr.audits['largest-contentful-paint']?.numericValue || 0,
-        tbt: lhr.audits['total-blocking-time']?.numericValue || 0,
-        cls: lhr.audits['cumulative-layout-shift']?.numericValue || 0,
-        fcp: lhr.audits['first-contentful-paint']?.numericValue || 0,
-        si: lhr.audits['speed-index']?.numericValue || 0,
-        tti: lhr.audits['interactive']?.numericValue || 0,
-      },
-      audits: lhr.audits,
-    };
-
-    // DB Storage (MongoDB only)
-    try {
-      await dbConnect();
+      await DBConnect();
       const user = await getUnifiedUser(req);
       if (user) {
+        const uid = user.id || user._id;
+        const userId = mongoose.Types.ObjectId.isValid(uid) ? new mongoose.Types.ObjectId(uid) : uid;
+
+        console.log("[SEO Audit] User detected, saving check to DB:", uid);
         await SeoCheck.create({
           url,
-          score: Math.round(results.performanceScore),
-          performanceScore: Math.round(results.performanceScore),
-          details: results,
-          userId: user.id,
+          score: report.score,
+          onPageScore: report.categories.onPage.score,
+          technicalScore: report.categories.technical.score,
+          contentScore: report.categories.content.score,
+          performanceScore: report.pagespeed?.performance || report.score,
+          linksScore: report.categories.links.score,
+          details: report,
+          userId: userId,
           checkedAt: new Date()
         });
-        console.log("AUDIT POST: Saved to MongoDB via Mongoose");
       }
-    } catch (dbError) {
-      console.error("DB Storage failed", dbError);
+    } catch (dbErr: any) {
+      console.error("[SEO Audit] Failed to save to MongoDB (ignoring):", dbErr.message);
     }
 
-    return NextResponse.json(results);
+    return NextResponse.json(report);
   } catch (error: any) {
-    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
-    console.error("AUDIT POST ERROR:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[SEO Audit] Error:", error);
+    return NextResponse.json(
+      { error: error.message || "Analysis failed. Please try again." },
+      { status: 500 }
+    );
   }
 }

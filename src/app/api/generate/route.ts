@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const { prompt } = await req.json();
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-flash-latest", 
+      model: "gemini-2.0-flash", 
     });
 
     const result = await model.generateContent(prompt);
@@ -19,6 +19,13 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     console.error("AI GENERATE ERROR:", error);
+    const msg: string = error.message || "";
+    if (msg.includes("429") || msg.includes("quota") || msg.includes("Too Many Requests")) {
+      return NextResponse.json(
+        { error: "API quota exceeded. Free tier limit reached — please wait a few minutes or upgrade at https://ai.google.dev" },
+        { status: 429 },
+      );
+    }
     return NextResponse.json(
       { error: error.message || "Failed to generate code" },
       { status: 500 },
