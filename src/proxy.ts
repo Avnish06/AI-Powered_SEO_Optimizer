@@ -6,7 +6,7 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   
   // Define public paths
-  const publicApiPaths = ["/api/login", "/api/signup", "/api/user", "/api/audit", "/api/analyze", "/api/logout"];
+  const publicApiPaths = ["/api/login", "/api/signup", "/api/user", "/api/audit", "/api/analyze", "/api/logout", "/api/auth"];
   const isPublicApi = publicApiPaths.some((p) => path.startsWith(p));
   const isDashboard = path.startsWith("/dashboard");
   const isApi = path.startsWith("/api/");

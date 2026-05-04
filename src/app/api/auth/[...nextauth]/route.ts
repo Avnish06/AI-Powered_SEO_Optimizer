@@ -1,4 +1,4 @@
-import NextAuth, { DefaultSession } from "next-auth";
+import NextAuth, { DefaultSession, NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
@@ -6,28 +6,37 @@ import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/DBConnect";
 import User from "@/model/User";
 
-// Module augmentation for NextAuth types
+/**
+ * Extend NextAuth session type
+ */
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-    } & DefaultSession["user"]
+    } & DefaultSession["user"];
   }
 }
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
+    /**
+     * GOOGLE LOGIN
+     */
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
 
+    /**
+     * EMAIL + PASSWORD LOGIN
+     */
     CredentialsProvider({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
+
       async authorize(credentials) {
         await dbConnect();
 
@@ -45,8 +54,8 @@ export const authOptions = {
         if (!isMatch) throw new Error("Wrong password");
 
         return {
-          id: user._id.toString(),
-          name: user.fullName, // Using fullName from our schema
+          id: user._id.toString(), // ✅ IMPORTANT
+          name: user.fullName,
           email: user.email,
         };
       },
@@ -54,34 +63,49 @@ export const authOptions = {
   ],
 
   callbacks: {
-    async signIn({ user, account }: any) {
+    /**
+     * SIGN IN (Google fix)
+     */
+    async signIn({ user, account }) {
       await dbConnect();
 
       if (account?.provider === "google") {
-        const existingUser = await User.findOne({
+        let dbUser = await User.findOne({
           email: user.email,
         });
 
-        if (!existingUser) {
-          await User.create({
-            fullName: user.name, // Map Google's 'name' to our 'fullName'
+        // Create user if not exists
+        if (!dbUser) {
+          dbUser = await User.create({
+            fullName: user.name,
             email: user.email,
             password: "",
-            provider: account.provider,
-            accountType: "INDIVIDUAL"
+            provider: "google",
+            accountType: "INDIVIDUAL",
           });
         }
+
+        // 🔥 CRITICAL FIX → attach MongoDB _id
+        user.id = dbUser._id.toString();
       }
 
       return true;
     },
 
-    async jwt({ token, user }: any) {
-      if (user) token.id = user.id;
+    /**
+     * JWT CALLBACK
+     */
+    async jwt({ token, user }) {
+      if (user?.id) {
+        token.id = user.id;
+      }
       return token;
     },
 
-    async session({ session, token }: any) {
+    /**
+     * SESSION CALLBACK
+     */
+    async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
       }
@@ -90,7 +114,7 @@ export const authOptions = {
   },
 
   session: {
-    strategy: "jwt" as const,
+    strategy: "jwt",
   },
 
   pages: {
@@ -100,5 +124,9 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
+/**
+ * NextAuth handler
+ */
 const handler = NextAuth(authOptions);
+
 export { handler as GET, handler as POST };
