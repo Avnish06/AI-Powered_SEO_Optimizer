@@ -25,6 +25,7 @@ const Userschema = new Schema(
       required: false,
       trim: true,
       unique: true,
+      sparse: true, // Allows multiple users to have no phone number
     },
     accountType: {
       type: String,
