@@ -120,6 +120,35 @@ export default function Sidebar({
     setAiPrompt("");
   };
 
+  const [imgAiLoading, setImgAiLoading] = useState(false);
+
+  const handleGenerateAiImage = async () => {
+    if (!aiPrompt.trim()) return;
+    setImgAiLoading(true);
+    try {
+      // Pollinations.ai provides Stable Diffusion/Flux images entirely FREE with NO API key required!
+      const seed = Math.floor(Math.random() * 999999);
+      const imgUrl = `/api/image?prompt=${encodeURIComponent(aiPrompt.trim())}&width=1024&height=1024&seed=${seed}`;
+      
+      // Preload and verify the image is fetchable before sending to canvas
+      await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous"; // Crucial to prevent canvas "tainting" so user can export!
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = imgUrl;
+      });
+
+      // Place on canvas
+      onAdd("image-url", { url: imgUrl });
+      setAiPrompt("");
+    } catch (err) {
+      console.error("Failed to generate or load AI image:", err);
+    } finally {
+      setImgAiLoading(false);
+    }
+  };
+
   const handlePresetChange = (presetId: string) => {
     setCanvasPreset(presetId);
     const preset = CANVAS_PRESETS.find((p) => p.id === presetId);
@@ -412,23 +441,42 @@ export default function Sidebar({
                 rows={3}
                 className="w-full bg-[#1e293b] border border-white/[0.06] rounded-xl px-3 py-2.5 text-[11px] text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-colors resize-none leading-relaxed"
               />
-              <button
-                onClick={handleAiGenerate}
-                disabled={!aiPrompt.trim() || aiLoading}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-bold transition-all"
-              >
-                {aiLoading ? (
-                  <>
-                    <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Generating…
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Generate Design
-                  </>
-                )}
-              </button>
+              <div className="grid grid-cols-1 gap-1.5">
+                <button
+                  onClick={handleGenerateAiImage}
+                  disabled={!aiPrompt.trim() || imgAiLoading || aiLoading}
+                  className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] font-bold transition-all"
+                >
+                  {imgAiLoading ? (
+                    <>
+                      <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Generating Image…
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      Generate AI Image (No Key)
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleAiGenerate}
+                  disabled={!aiPrompt.trim() || aiLoading || imgAiLoading}
+                  className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] disabled:opacity-40 disabled:cursor-not-allowed border border-white/[0.05] text-slate-300 text-[11px] font-bold transition-all"
+                >
+                  {aiLoading ? (
+                    <>
+                      <span className="w-3 h-3 border-2 border-slate-400 border-t-slate-200 rounded-full animate-spin" />
+                      Finding Template…
+                    </>
+                  ) : (
+                    <>
+                      <LayoutTemplate className="w-3.5 h-3.5" />
+                      Generate Layout Template
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1.5">
