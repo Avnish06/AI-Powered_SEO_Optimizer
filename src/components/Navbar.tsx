@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, LogOut, Sun, Moon, Menu, X, ChevronDown } from "lucide-react";
+import { Search, LogOut, Sun, Moon, Menu, X, ChevronDown, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
@@ -10,11 +10,12 @@ import { motion, AnimatePresence } from "framer-motion";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 const navLinks = [
-  { label: "Features", href: "/#features" },
-  { label: "How it Works", href: "/#how" },
-  { label: "AI Tools", href: "/ai" },
-  { label: "Designer", href: "/designer" },
-  { label: "Marketing", href: "/marketing" },
+  { label: "Home", href: "/" },
+  { label: "About", href: "/#about" },
+  { label: "Services", href: "/#services" },
+  { label: "Platforms", href: "/#platforms" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export default function Navbar() {
@@ -57,29 +58,25 @@ export default function Navbar() {
           background: scrolled ? "var(--navbar-bg)" : "transparent",
         }}
       >
-        <Link href="/" className="flex items-center gap-2 flex-shrink-0 bg-white px-2.5 py-1 rounded-xl shadow-sm border border-slate-100" id="navbar-logo">
-          <img src="/logo2.png" alt="SEOAI Logo" className="h-7 w-auto select-none" />
+        <Link href="/" className="flex items-center gap-2 flex-shrink-0" id="navbar-logo">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-lg" style={{ background: "linear-gradient(135deg, #3b82f6 0%, #ec4899 50%, #f97316 100%)" }}>
+            <span className="text-white font-bold text-lg leading-none mt-[-2px]">✔</span>
+          </div>
+          <span className="text-2xl font-bold tracking-tight text-white">Colvo</span>
         </Link>
 
         {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-6">
           {navLinks.map(({ href, label }) => (
             <Link
               key={href}
               href={href}
-              className="text-sm font-medium px-3.5 py-2 rounded-lg transition-all hover:bg-[var(--bg-elevated)]"
+              className="text-sm font-medium transition-colors hover:text-white"
               style={{ color: "var(--text-secondary)" }}
             >
               {label}
             </Link>
           ))}
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium px-3.5 py-2 rounded-lg transition-all hover:bg-[var(--bg-elevated)]"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Dashboard
-          </Link>
         </div>
 
         {/* Right side */}
@@ -91,6 +88,7 @@ export default function Navbar() {
             aria-label="Toggle theme"
             whileTap={{ scale: 0.88 }}
             className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-[var(--bg-elevated)]"
+            suppressHydrationWarning
           >
             <AnimatePresence mode="wait">
               {theme === "light" ? (
@@ -146,14 +144,9 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/signup"
-                className="text-sm font-semibold px-4 py-2 rounded-lg transition-all"
-                style={{
-                  background: "var(--accent)",
-                  color: "white",
-                  boxShadow: "none",
-                }}
+                className="premium-button text-sm flex items-center gap-2"
               >
-                Get Started
+                Get Started <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           )}

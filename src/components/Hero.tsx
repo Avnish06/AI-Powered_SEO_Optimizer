@@ -1,203 +1,182 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight, Globe, CheckCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ArrowRight, Play, TrendingUp, Clock, MessageSquare, MousePointer2 } from "lucide-react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-const PROOF = [
-  "No sign-up required",
-  "Results in under 20s",
-  "Real Google PageSpeed data",
-];
-
 export default function Hero() {
-  const [url, setUrl]       = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url.trim()) return;
-    setLoading(true);
-    router.push(`/audit/results?url=${encodeURIComponent(url.trim())}`);
-  };
-
   return (
-    <section className="relative pt-36 pb-28 px-4 flex flex-col items-center text-center overflow-hidden t-bg">
-
-      {/* Very subtle background — just a soft indigo glow, no neon blobs */}
+    <section className="relative pt-32 pb-20 px-6 lg:px-12 flex flex-col items-center justify-center min-h-screen overflow-hidden t-bg">
+      {/* Background gradients */}
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] pointer-events-none"
+        className="absolute top-1/4 left-0 w-[500px] h-[500px] pointer-events-none rounded-full"
         style={{
-          background: "radial-gradient(ellipse at 50% 0%, rgba(79,70,229,0.07) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(236, 72, 153, 0.05) 0%, transparent 70%)",
+        }}
+      />
+      <div
+        className="absolute bottom-0 right-0 w-[600px] h-[600px] pointer-events-none rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%)",
         }}
       />
 
-      <div className="max-w-3xl mx-auto relative z-10">
-
-        {/* Eyebrow label */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: EASE }}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border t-border bg-[var(--bg-surface)] mb-8 shadow-sm"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
-          <span className="text-[11px] font-semibold tracking-wide t-muted">
-            Free SEO Audit · No account needed
-          </span>
-        </motion.div>
-
-        {/* Headline — editorial, human */}
-        <motion.h1
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.05, ease: EASE }}
-          className="text-[2.8rem] sm:text-5xl md:text-[3.6rem] font-bold leading-[1.1] tracking-[-0.03em] t-heading mb-6"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
-          Find every SEO issue{" "}
-          <span className="gradient-text">on your site</span>
-          <br />
-          in one scan.
-        </motion.h1>
-
-        {/* Subheadline — honest, specific, human */}
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.12, ease: EASE }}
-          className="text-lg t-body mb-10 max-w-xl mx-auto leading-relaxed"
-        >
-          Paste your URL and get a full report — on-page, technical,
-          content quality, Open Graph, and real Core Web Vitals from Google.
-        </motion.p>
-
-        {/* URL Input — clean, not flashy */}
-        <motion.form
-          onSubmit={handleSubmit}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.18, ease: EASE }}
-          className="relative flex flex-col sm:flex-row gap-2.5 max-w-xl mx-auto"
-        >
-          <div
-            className="flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border t-border bg-[var(--bg-surface)] shadow-sm focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_3px_rgba(79,70,229,0.08)] transition-all"
+      <div className="max-w-7xl w-full mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+        
+        {/* LEFT COLUMN: Copy & CTA */}
+        <div className="flex flex-col items-start text-left max-w-xl">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: EASE }}
+            className="text-[0.65rem] font-bold tracking-[0.2em] uppercase text-pink-500 mb-6"
           >
-            <Globe className="w-4 h-4 t-muted flex-shrink-0" />
-            <input
-              type="text"
-              required
-              value={url}
-              onChange={e => setUrl(e.target.value)}
-              placeholder="https://yourwebsite.com"
-              className="flex-1 bg-transparent text-sm font-medium t-heading placeholder:t-muted outline-none min-w-0"
-            />
-          </div>
-          <button
-            disabled={loading}
-            className="premium-button px-5 py-3 rounded-xl text-sm font-semibold flex-shrink-0"
+            All-In-One Digital Business Platform
+          </motion.p>
+          
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.05, ease: EASE }}
+            className="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-[1.05] tracking-tight t-heading mb-6"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
-            {loading
-              ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              : <><span>Analyze site</span><ArrowRight className="w-4 h-4" /></>
-            }
-          </button>
-        </motion.form>
+            We make your<br />
+            <span className="gradient-text">digital business</span><br />
+            very easy!
+          </motion.h1>
 
-        {/* Proof points — simple, honest */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.35 }}
-          className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-5"
-        >
-          {PROOF.map(p => (
-            <span key={p} className="flex items-center gap-1.5 text-xs t-muted">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-              {p}
-            </span>
-          ))}
-        </motion.div>
-      </div>
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.12, ease: EASE }}
+            className="text-lg text-slate-300 mb-10 leading-relaxed max-w-md"
+          >
+            Colvo is an ecosystem of powerful tools that help you
+            automate marketing, engage customers, and grow faster.
+          </motion.p>
 
-      {/* Dashboard preview — clean screenshot mockup */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, delay: 0.4, ease: EASE }}
-        className="relative mt-20 w-full max-w-5xl mx-auto px-4"
-      >
-        {/* Soft base shadow — NOT a glowing halo */}
-        <div
-          className="relative rounded-2xl overflow-hidden border t-border shadow-xl"
-          style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px var(--border-color)" }}
-        >
-          {/* Fake browser chrome */}
-          <div className="flex items-center gap-1.5 px-4 py-3 border-b t-border bg-[var(--bg-elevated)]">
-            <span className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-            <span className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-            <span className="w-3 h-3 rounded-full bg-[#28C840]" />
-            <div className="flex-1 mx-4 h-6 rounded-md bg-[var(--bg-muted)] flex items-center px-3">
-              <span className="text-[10px] t-muted truncate">seoai.app/audit/results?url=...</span>
-            </div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.18, ease: EASE }}
+            className="flex flex-col sm:flex-row items-center gap-6 mb-12 w-full sm:w-auto"
+          >
+            <Link
+              href="/signup"
+              className="premium-button w-full sm:w-auto"
+            >
+              Get Started Now <ArrowRight className="w-4 h-4 ml-1" />
+            </Link>
+            
+            <button className="flex items-center gap-3 text-sm font-semibold t-heading hover:text-pink-400 transition-colors w-full sm:w-auto justify-center sm:justify-start group">
+              <span className="w-10 h-10 rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] flex items-center justify-center group-hover:bg-[rgba(255,255,255,0.1)] transition-colors">
+                <Play className="w-4 h-4 text-white fill-current translate-x-[1px]" />
+              </span>
+              Explore Features
+            </button>
+          </motion.div>
 
-          {/* Mock report inside */}
-          <div className="bg-[var(--bg-surface)] p-6 sm:p-8">
-            {/* Score row */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <div className="flex items-center gap-4 p-5 rounded-xl border t-border flex-1 bg-[var(--bg-elevated)]">
-                <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg font-black text-emerald-600">87</span>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold t-muted uppercase tracking-wider">Overall Score</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="h-1.5 w-28 bg-[var(--bg-muted)] rounded-full overflow-hidden">
-                      <div className="h-full w-[87%] bg-emerald-500 rounded-full" />
-                    </div>
-                    <span className="text-xs font-bold text-emerald-600">Good</span>
-                  </div>
-                </div>
-              </div>
-              {[
-                { label: "On-Page", v: 91, c: "#6366f1" },
-                { label: "Technical", v: 75, c: "#8b5cf6" },
-                { label: "Content", v: 83, c: "#10b981" },
-              ].map(({ label, v, c }) => (
-                <div key={label} className="p-4 rounded-xl border t-border flex flex-col justify-between bg-[var(--bg-elevated)]">
-                  <p className="text-[10px] font-bold t-muted uppercase tracking-wider">{label}</p>
-                  <p className="text-2xl font-black mt-1" style={{ color: c }}>{v}</p>
-                </div>
-              ))}
-            </div>
-            {/* Issue list skeleton */}
-            {[
-              { status: "pass", text: "HTTPS enabled — secure connection" },
-              { status: "pass", text: "Viewport meta tag present" },
-              { status: "warn", text: "Meta description too short (64 chars)" },
-              { status: "err",  text: "2 images missing alt attributes" },
-              { status: "pass", text: "Canonical URL set correctly" },
-            ].map((row, i) => (
-              <div key={i} className="flex items-center gap-3 py-2.5 border-t t-border first:border-t-0">
-                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                  row.status === "pass" ? "bg-emerald-500" :
-                  row.status === "warn" ? "bg-amber-500" : "bg-rose-500"
-                }`} />
-                <span className="text-xs t-body">{row.text}</span>
-              </div>
-            ))}
-          </div>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.35 }}
+            className="text-xs text-slate-500 font-medium"
+          >
+            Colvo: A highly trusted brand for your digital business
+          </motion.p>
         </div>
 
-        {/* Fade out the bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
-          style={{ background: "linear-gradient(to top, var(--bg-page), transparent)" }} />
-      </motion.div>
+        {/* RIGHT COLUMN: Glass Cards */}
+        <motion.div
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.9, delay: 0.2, ease: EASE }}
+          className="relative w-full aspect-square md:aspect-video lg:aspect-square max-w-2xl mx-auto hidden sm:block"
+        >
+          {/* Main Chart Card */}
+          <div className="absolute top-[10%] left-[0%] w-[60%] h-[40%] rounded-2xl bg-[rgba(15,12,30,0.6)] backdrop-blur-xl border border-[rgba(255,255,255,0.08)] p-5 shadow-2xl flex flex-col transition-transform hover:scale-[1.02]">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex gap-1">
+                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              </div>
+              <span className="text-[10px] text-slate-400 ml-2 font-medium">Campaign Performance</span>
+            </div>
+            {/* Fake glowing line chart */}
+            <div className="flex-1 relative mt-2 flex items-end">
+              <div className="absolute inset-0 bg-gradient-to-t from-[rgba(236,72,153,0.15)] to-transparent" />
+              <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                <path d="M0 35 Q 20 30, 40 25 T 70 15 T 100 5" fill="none" stroke="url(#lineGrad)" strokeWidth="1.5" />
+                <defs>
+                  <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#8b5cf6" />
+                    <stop offset="50%" stopColor="#ec4899" />
+                    <stop offset="100%" stopColor="#f97316" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              {/* Point */}
+              <div className="absolute top-[5%] right-[0%] w-2.5 h-2.5 bg-pink-500 rounded-full shadow-[0_0_12px_#ec4899]" />
+            </div>
+          </div>
+
+          {/* Circular Progress Card */}
+          <div className="absolute top-[10%] right-[0%] w-[36%] h-[50%] rounded-2xl bg-[rgba(15,12,30,0.6)] backdrop-blur-xl border border-[rgba(255,255,255,0.08)] p-5 shadow-2xl flex flex-col items-center justify-center transition-transform hover:scale-[1.02]">
+            <span className="text-[10px] text-slate-400 absolute top-5 text-center w-full font-medium">Client Satisfaction</span>
+            <div className="relative w-32 h-32 mt-6 rounded-full flex items-center justify-center"
+                 style={{ background: "conic-gradient(from 180deg, #ec4899 0%, #3b82f6 70%, #1e1b4b 70%, #1e1b4b 100%)" }}
+            >
+              <div className="w-28 h-28 bg-[#0f0c1e] rounded-full flex flex-col items-center justify-center shadow-inner">
+                <span className="text-3xl font-extrabold text-white leading-none">98%</span>
+                <span className="text-[9px] text-slate-400 mt-1">Satisfied</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Floating Pink Cursor */}
+          <motion.div
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-[0%] right-[-8%] z-20 text-pink-500 drop-shadow-[0_0_15px_rgba(236,72,153,0.8)]"
+          >
+            <MousePointer2 className="w-12 h-12 fill-pink-500 rotate-[-15deg] stroke-white stroke-[1.5px]" />
+          </motion.div>
+
+          {/* Metric 1 */}
+          <div className="absolute bottom-[20%] left-[0%] w-[31%] h-[24%] rounded-2xl bg-[rgba(15,12,30,0.6)] backdrop-blur-xl border border-[rgba(255,255,255,0.08)] p-4 shadow-2xl flex flex-col justify-end group hover:border-[rgba(139,92,246,0.4)] transition-all hover:-translate-y-1 cursor-pointer">
+            <div className="w-7 h-7 rounded-lg bg-[rgba(139,92,246,0.2)] mb-auto flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-purple-400" />
+            </div>
+            <span className="text-[9px] text-slate-400 font-medium">Total Reach</span>
+            <span className="text-2xl font-bold text-white leading-tight">80K+</span>
+            <span className="text-[8px] text-slate-500 mt-0.5">People Reached</span>
+          </div>
+
+          {/* Metric 2 */}
+          <div className="absolute bottom-[20%] left-[34.5%] w-[31%] h-[24%] rounded-2xl bg-[rgba(15,12,30,0.6)] backdrop-blur-xl border border-[rgba(255,255,255,0.08)] p-4 shadow-2xl flex flex-col justify-end group hover:border-[rgba(249,115,22,0.4)] transition-all hover:-translate-y-1 cursor-pointer">
+            <div className="w-7 h-7 rounded-lg bg-[rgba(249,115,22,0.2)] mb-auto flex items-center justify-center">
+              <Clock className="w-4 h-4 text-orange-400" />
+            </div>
+            <span className="text-[9px] text-slate-400 font-medium">Response Time</span>
+            <span className="text-2xl font-bold text-white leading-tight">0.3s</span>
+            <span className="text-[8px] text-slate-500 mt-0.5">Average Time</span>
+          </div>
+
+          {/* Metric 3 */}
+          <div className="absolute bottom-[20%] right-[0%] w-[31%] h-[24%] rounded-2xl bg-[rgba(15,12,30,0.6)] backdrop-blur-xl border border-[rgba(255,255,255,0.08)] p-4 shadow-2xl flex flex-col justify-end group hover:border-[rgba(59,130,246,0.4)] transition-all hover:-translate-y-1 cursor-pointer">
+            <div className="w-7 h-7 rounded-lg bg-[rgba(59,130,246,0.2)] mb-auto flex items-center justify-center">
+              <MessageSquare className="w-4 h-4 text-blue-400" />
+            </div>
+            <span className="text-[9px] text-slate-400 font-medium">Messages Sent</span>
+            <span className="text-2xl font-bold text-white leading-tight">45K</span>
+            <span className="text-[8px] text-slate-500 mt-0.5">Sent This Month</span>
+          </div>
+        </motion.div>
+      </div>
     </section>
   );
 }

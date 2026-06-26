@@ -158,6 +158,7 @@ export default function Footer() {
             whileTap={{ scale: 0.92 }}
             className="w-9 h-9 rounded-full flex items-center justify-center text-white shadow-md"
             style={{ background: "var(--gradient)" }}
+            suppressHydrationWarning
           >
             <ArrowUp className="w-4 h-4" />
           </motion.button>
